@@ -10,13 +10,20 @@ export async function GET() {
         code: true,
         role: true,
         active: true,
+        createdAt: true,
+        updatedAt: true, // ✅ FIX ICI
       },
     });
 
     return NextResponse.json(users);
   } catch (error) {
+    console.error("GET /api/users error:", error);
+
     return NextResponse.json(
-      { error: "Failed to fetch users" },
+      {
+        error: "Failed to fetch users",
+        details: error instanceof Error ? error.message : error,
+      },
       { status: 500 }
     );
   }

@@ -41,12 +41,6 @@ export default function Dashboard() {
   // MENU ITEMS
   const menuItems = [
     {
-      title: "Dashboard",
-      icon: LayoutDashboard,
-      color: "from-cyan-500 to-blue-500",
-      path: "/dashboard",
-    },
-    {
       title: "Machines",
       icon: Wrench,
       color: "from-orange-500 to-red-500",

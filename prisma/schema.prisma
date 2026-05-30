@@ -17,7 +17,7 @@ datasource db {
 enum Role {
   ADMIN
   MANAGER
-  TECHNICIEN
+  TECH
 }
 
 model User {
@@ -25,7 +25,7 @@ model User {
   email     String @unique
   code      String @unique
   password  String
-  role      Role @default(TECHNICIEN)
+  role      Role @default(TECH)
   active    Boolean @default(true)
   deletedAt DateTime?
 
