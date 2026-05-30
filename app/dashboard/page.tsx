@@ -38,61 +38,73 @@ export default function Dashboard() {
     router.push("/login");
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white overflow-hidden">
-        Loading...
-      </div>
-    );
-  }
-
+  // MENU ITEMS
   const menuItems = [
     {
       title: "Dashboard",
       icon: LayoutDashboard,
       color: "from-cyan-500 to-blue-500",
+      path: "/dashboard",
     },
     {
       title: "Machines",
       icon: Wrench,
       color: "from-orange-500 to-red-500",
+      path: "/machines",
     },
     {
       title: "Maintenance",
       icon: ClipboardList,
       color: "from-green-500 to-emerald-500",
+      path: "/maintenance",
     },
     {
       title: "Tickets",
       icon: FileText,
       color: "from-pink-500 to-rose-500",
+      path: "/tickets",
     },
     {
       title: "Stock Pièces",
       icon: Package,
       color: "from-yellow-500 to-orange-500",
+      path: "/stock",
     },
     {
       title: "Planning",
       icon: CalendarCheck,
       color: "from-indigo-500 to-violet-500",
+      path: "/planning",
     },
     {
       title: "Rapports",
       icon: BarChart3,
       color: "from-teal-500 to-cyan-500",
+      path: "/reports",
     },
     {
       title: "Utilisateurs",
       icon: Users,
       color: "from-purple-500 to-fuchsia-500",
+      path: "/users",
     },
     {
       title: "Sécurité",
       icon: ShieldCheck,
       color: "from-lime-500 to-green-500",
+      path: "/security",
     },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-slate-950 text-white">
+        <div className="text-xl font-semibold animate-pulse">
+          Loading Dashboard...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-white overflow-hidden">
@@ -120,6 +132,7 @@ export default function Dashboard() {
             return (
               <button
                 key={index}
+                onClick={() => router.push(item.path)}
                 className={`
                   w-full flex items-center gap-4
                   p-4 rounded-2xl
@@ -175,6 +188,7 @@ export default function Dashboard() {
 
           <div className="flex flex-wrap items-center gap-4">
 
+            {/* SEARCH */}
             <div className="
               flex items-center gap-2
               bg-slate-900 px-4 py-3 rounded-xl
@@ -195,19 +209,26 @@ export default function Dashboard() {
               />
             </div>
 
-            <button className="
-              p-3 rounded-xl
-              bg-slate-900 border border-slate-800
-              hover:bg-slate-800 transition
-            ">
+            {/* NOTIFICATION */}
+            <button
+              className="
+                p-3 rounded-xl
+                bg-slate-900 border border-slate-800
+                hover:bg-slate-800 transition
+              "
+            >
               <Bell size={20} />
             </button>
 
-            <button className="
-              p-3 rounded-xl
-              bg-slate-900 border border-slate-800
-              hover:bg-slate-800 transition
-            ">
+            {/* SETTINGS */}
+            <button
+              onClick={() => router.push("/settings")}
+              className="
+                p-3 rounded-xl
+                bg-slate-900 border border-slate-800
+                hover:bg-slate-800 transition
+              "
+            >
               <Settings size={20} />
             </button>
           </div>
@@ -216,7 +237,7 @@ export default function Dashboard() {
         {/* STATS */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
 
-          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl">
+          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl hover:border-cyan-500 transition">
             <p className="text-slate-400 text-sm">
               Machines
             </p>
@@ -226,7 +247,7 @@ export default function Dashboard() {
             </h3>
           </div>
 
-          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl">
+          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl hover:border-orange-500 transition">
             <p className="text-slate-400 text-sm">
               Tickets ouverts
             </p>
@@ -236,7 +257,7 @@ export default function Dashboard() {
             </h3>
           </div>
 
-          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl">
+          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl hover:border-cyan-500 transition">
             <p className="text-slate-400 text-sm">
               Interventions
             </p>
@@ -246,7 +267,7 @@ export default function Dashboard() {
             </h3>
           </div>
 
-          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl">
+          <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-xl hover:border-green-500 transition">
             <p className="text-slate-400 text-sm">
               Techniciens
             </p>
@@ -268,11 +289,15 @@ export default function Dashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
 
-            <button className="
-              bg-cyan-600 hover:bg-cyan-700
-              rounded-2xl p-5 text-left
-              transition-all shadow-lg
-            ">
+            {/* MACHINE */}
+            <button
+              onClick={() => router.push("/machines")}
+              className="
+                bg-cyan-600 hover:bg-cyan-700
+                rounded-2xl p-5 text-left
+                transition-all shadow-lg
+              "
+            >
               <Wrench className="mb-3" />
 
               <h4 className="font-bold text-lg">
@@ -280,11 +305,15 @@ export default function Dashboard() {
               </h4>
             </button>
 
-            <button className="
-              bg-orange-600 hover:bg-orange-700
-              rounded-2xl p-5 text-left
-              transition-all shadow-lg
-            ">
+            {/* TICKET */}
+            <button
+              onClick={() => router.push("/tickets")}
+              className="
+                bg-orange-600 hover:bg-orange-700
+                rounded-2xl p-5 text-left
+                transition-all shadow-lg
+              "
+            >
               <ClipboardList className="mb-3" />
 
               <h4 className="font-bold text-lg">
@@ -292,11 +321,15 @@ export default function Dashboard() {
               </h4>
             </button>
 
-            <button className="
-              bg-green-600 hover:bg-green-700
-              rounded-2xl p-5 text-left
-              transition-all shadow-lg
-            ">
+            {/* USERS */}
+            <button
+              onClick={() => router.push("/users")}
+              className="
+                bg-green-600 hover:bg-green-700
+                rounded-2xl p-5 text-left
+                transition-all shadow-lg
+              "
+            >
               <Users className="mb-3" />
 
               <h4 className="font-bold text-lg">
@@ -304,11 +337,15 @@ export default function Dashboard() {
               </h4>
             </button>
 
-            <button className="
-              bg-purple-600 hover:bg-purple-700
-              rounded-2xl p-5 text-left
-              transition-all shadow-lg
-            ">
+            {/* REPORTS */}
+            <button
+              onClick={() => router.push("/reports")}
+              className="
+                bg-purple-600 hover:bg-purple-700
+                rounded-2xl p-5 text-left
+                transition-all shadow-lg
+              "
+            >
               <BarChart3 className="mb-3" />
 
               <h4 className="font-bold text-lg">

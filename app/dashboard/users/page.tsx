@@ -1,9 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, UserPlus, Trash2 } from "lucide-react";
 
 export default function UsersPage() {
-  const [users, setUsers] = useState([]);
+  const router = useRouter();
+
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -12,9 +18,19 @@ export default function UsersPage() {
   });
 
   async function loadUsers() {
-    const res = await fetch("/api/users");
-    const data = await res.json();
-    setUsers(data);
+    try {
+      setLoading(true);
+
+      const res = await fetch("/api/users");
+      const data = await res.json();
+
+      setUsers(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
@@ -24,6 +40,9 @@ export default function UsersPage() {
   async function createUser() {
     await fetch("/api/users", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(form),
     });
 
@@ -32,73 +51,138 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="min-h-screen bg-slate-950 text-white p-8 space-y-6">
 
-      <h1 className="text-2xl font-bold">Utilisateurs</h1>
+      {/* HEADER */}
+      <div className="flex items-center justify-between">
 
-      {/* ADD USER */}
-      <div className="bg-slate-900 p-4 rounded-xl space-y-3">
-        <input
-          placeholder="Nom"
-          className="p-2 w-full bg-slate-800 rounded"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
-        />
+        <h1 className="text-3xl font-bold">
+          👥 Gestion des utilisateurs
+        </h1>
 
-        <input
-          placeholder="Email"
-          className="p-2 w-full bg-slate-800 rounded"
-          value={form.email}
-          onChange={(e) => setForm({ ...form, email: e.target.value })}
-        />
-
-        <input
-          placeholder="Password"
-          type="password"
-          className="p-2 w-full bg-slate-800 rounded"
-          value={form.password}
-          onChange={(e) => setForm({ ...form, password: e.target.value })}
-        />
-
-        <select
-          className="p-2 w-full bg-slate-800 rounded"
-          value={form.role}
-          onChange={(e) => setForm({ ...form, role: e.target.value })}
+        <button
+          onClick={() => router.push("/dashboard")}
+          className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl"
         >
-          <option value="USER">USER</option>
-          <option value="TECH">TECH</option>
-          <option value="ADMIN">ADMIN</option>
-        </select>
+          <ArrowLeft size={18} />
+          Retour Dashboard
+        </button>
+
+      </div>
+
+      {/* CREATE USER CARD */}
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+
+        <h2 className="text-xl font-semibold">
+          ➕ Créer un utilisateur
+        </h2>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <input
+            placeholder="Nom"
+            className="p-3 bg-slate-800 rounded-xl outline-none"
+            value={form.name}
+            onChange={(e) => setForm({ ...form, name: e.target.value })}
+          />
+
+          <input
+            placeholder="Email"
+            className="p-3 bg-slate-800 rounded-xl outline-none"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+          />
+
+          <input
+            placeholder="Mot de passe"
+            type="password"
+            className="p-3 bg-slate-800 rounded-xl outline-none"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+          />
+
+          <select
+            className="p-3 bg-slate-800 rounded-xl"
+            value={form.role}
+            onChange={(e) => setForm({ ...form, role: e.target.value })}
+          >
+            <option value="USER">Utilisateur</option>
+            <option value="TECH">Technicien</option>
+            <option value="ADMIN">Administrateur</option>
+          </select>
+
+        </div>
 
         <button
           onClick={createUser}
-          className="bg-green-600 px-4 py-2 rounded"
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 px-5 py-3 rounded-xl"
         >
-          Ajouter utilisateur
+          <UserPlus size={18} />
+          Créer utilisateur
         </button>
+
       </div>
 
       {/* LIST */}
-      <div className="bg-slate-900 p-4 rounded-xl">
-        <h2 className="text-xl mb-3">Liste des utilisateurs</h2>
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
 
-        <div className="space-y-2">
-          {users.map((u: any) => (
-            <div
-              key={u.id}
-              className="p-3 bg-slate-800 rounded flex justify-between"
-            >
-              <div>
-                <p className="font-bold">{u.name}</p>
-                <p className="text-sm text-gray-400">{u.email}</p>
-              </div>
+        <h2 className="text-xl font-semibold mb-4">
+          📋 Liste des utilisateurs
+        </h2>
 
-              <span className="text-sm text-cyan-400">
-                {u.role}
-              </span>
-            </div>
-          ))}
-        </div>
+        {loading ? (
+          <p className="text-slate-400">Chargement...</p>
+        ) : users.length === 0 ? (
+          <p className="text-slate-400">Aucun utilisateur trouvé</p>
+        ) : (
+          <div className="overflow-x-auto">
+
+            <table className="w-full text-left">
+
+              <thead>
+                <tr className="text-slate-400 border-b border-slate-800">
+                  <th className="p-3">Nom</th>
+                  <th className="p-3">Email</th>
+                  <th className="p-3">Rôle</th>
+                  <th className="p-3">Action</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {users.map((u: any) => (
+                  <tr
+                    key={u.id}
+                    className="border-b border-slate-800 hover:bg-slate-800 transition"
+                  >
+                    <td className="p-3 font-semibold">{u.name}</td>
+                    <td className="p-3 text-slate-300">{u.email}</td>
+
+                    <td className="p-3">
+                      <span className={`
+                        px-3 py-1 rounded-full text-sm
+                        ${u.role === "ADMIN" ? "bg-red-600" : ""}
+                        ${u.role === "TECH" ? "bg-yellow-600" : ""}
+                        ${u.role === "USER" ? "bg-blue-600" : ""}
+                      `}>
+                        {u.role}
+                      </span>
+                    </td>
+
+                    <td className="p-3">
+                      <button className="text-red-400 hover:text-red-300">
+                        <Trash2 size={18} />
+                      </button>
+                    </td>
+
+                  </tr>
+                ))}
+              </tbody>
+
+            </table>
+
+          </div>
+        )}
+
       </div>
 
     </div>

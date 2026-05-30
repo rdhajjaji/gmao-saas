@@ -1,27 +1,23 @@
 import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const users = await prisma.user.findMany({
-    include: { logs: true },
-    orderBy: { createdAt: "desc" },
-  });
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        code: true,
+        role: true,
+        active: true,
+      },
+    });
 
-  return NextResponse.json(users);
-}
-
-export async function POST(req: Request) {
-  const body = await req.json();
-
-  const user = await prisma.user.create({
-    data: {
-      email: body.email,
-      name: body.name,
-      password: await bcrypt.hash(body.password, 10),
-      role: body.role || "USER",
-    },
-  });
-
-  return NextResponse.json(user);
+    return NextResponse.json(users);
+  } catch (error) {
+    return NextResponse.json(
+      { error: "Failed to fetch users" },
+      { status: 500 }
+    );
+  }
 }
