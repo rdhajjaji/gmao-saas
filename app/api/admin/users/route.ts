@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import prisma  from "@/lib/prisma";
 
 // SIMPLE AUTH CHECK (à remplacer par JWT plus tard)
 function isAdmin(req: Request) {

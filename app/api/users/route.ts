@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
 
+import prisma from "@/lib/prisma";
 // 📥 GET USERS
 export async function GET() {
   try {
