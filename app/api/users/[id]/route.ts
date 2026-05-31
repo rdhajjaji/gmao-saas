@@ -1,58 +1,95 @@
-import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
-// 🔄 UPDATE USER
-export async function PATCH(
+// GET USER
+export async function GET(
   req: Request,
-  context: any
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await context.params;
 
-    // ✅ NEXT 15 FIX
-    const params = await context.params;
-
-    const id = params.id;
-
-    const body = await req.json();
-
-    const updated = await prisma.user.update({
-      where: {
-        id,
-      },
-      data: {
-        active: body.active,
-      },
+    const user = await prisma.user.findUnique({
+      where: { id },
     });
 
-    return NextResponse.json(updated);
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
 
+    return NextResponse.json(user);
   } catch (error) {
-    console.error("PATCH ERROR:", error);
-
+    console.error("GET ERROR:", error);
     return NextResponse.json(
-      { error: "Erreur update user" },
+      { error: "Server error" },
       { status: 500 }
     );
   }
 }
 
-// ❌ DELETE USER
-export async function DELETE(req: Request, context: any) {
+// PATCH USER
+export async function PATCH(
+  req: Request,
+  context: { params: Promise<{ id: string }> }
+) {
   try {
-    const params = await context.params;
-    const id = params.id;
+    const { id } = await context.params;
+    const body = await req.json();
+
+    const user = await prisma.user.update({
+      where: { id },
+      data: {
+        code: body.code,
+        email: body.email,
+        role: body.role,
+        active: body.active,
+      },
+    });
+
+    return NextResponse.json(user);
+  } catch (error) {
+    console.error("PATCH ERROR:", error);
+    return NextResponse.json(
+      { error: "Update failed" },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE USER (VERSION 100% SAFE)
+export async function DELETE(
+  req: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params;
+
+    console.log("DELETE USER ID:", id); // 👈 DEBUG IMPORTANT
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
 
     await prisma.user.delete({
       where: { id },
     });
 
     return NextResponse.json({ success: true });
-
   } catch (error) {
     console.error("DELETE ERROR:", error);
 
     return NextResponse.json(
-      { error: "DELETE failed" },
+      { error: "Delete failed" },
       { status: 500 }
     );
   }

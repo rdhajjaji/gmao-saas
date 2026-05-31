@@ -1,82 +1,62 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, Trash2, Hash, Plus, Pencil } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useRouter, useParams } from "next/navigation";
+import { ArrowLeft, Save } from "lucide-react";
 
-export default function UsersPage() {
+export default function EditUserPage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
 
-  const [users, setUsers] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [fetching, setFetching] = useState(true);
 
-  const [roleFilter, setRoleFilter] = useState("ALL");
-  const [statusFilter, setStatusFilter] = useState("ALL");
+  const [form, setForm] = useState({
+    code: "",
+    email: "",
+    role: "TECH",
+    active: true,
+  });
 
-  // 📅 format date safe
-  const formatDate = (date: any) => {
-    if (!date) return "--";
-    const d = new Date(date);
-    if (isNaN(d.getTime())) return "--";
-
-    return d.toLocaleString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  // 📥 LOAD USERS
-  async function loadUsers() {
-    try {
-      setLoading(true);
-
-      const res = await fetch("/api/users");
-      const data = await res.json();
-
-      setUsers(Array.isArray(data) ? data : []);
-    } catch (err) {
-      console.error("LOAD USERS ERROR:", err);
-    } finally {
-      setLoading(false);
-    }
-  }
-
+  // LOAD USER
   useEffect(() => {
-    loadUsers();
-  }, []);
+    async function fetchUser() {
+      try {
+        setFetching(true);
 
-  // 🔎 FILTERS
-  const filteredUsers = useMemo(() => {
-    return users.filter((u: any) => {
-      if (roleFilter !== "ALL" && u.role !== roleFilter) return false;
+        const res = await fetch(`/api/users/${id}`);
 
-      if (statusFilter === "ACTIVE" && u.active === false) return false;
-      if (statusFilter === "DISABLED" && u.active !== false) return false;
+        if (!res.ok) {
+          throw new Error("User not found");
+        }
 
-      return true;
-    });
-  }, [users, roleFilter, statusFilter]);
+        const data = await res.json();
 
-  // 🔄 TOGGLE STATUS (ULTRA STABLE)
-  async function toggleUserStatus(id: string) {
-    const user = users.find((u) => u.id === id);
-    if (!user) return;
+        // IMPORTANT: sécuriser les valeurs
+        setForm({
+          code: data?.code ?? "",
+          email: data?.email ?? "",
+          role: data?.role ?? "TECH",
+          active: data?.active ?? true,
+        });
+      } catch (err) {
+        console.error(err);
+        alert("Utilisateur introuvable");
+        router.push("/users");
+      } finally {
+        setFetching(false);
+      }
+    }
 
-    const newStatus = !user.active;
+    if (id) fetchUser();
+  }, [id, router]);
 
-    const previous = users;
+  // UPDATE USER
+  async function updateUser(e: any) {
+    e.preventDefault();
 
-    // UI optimistic update
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === id
-          ? { ...u, active: newStatus, updatedAt: new Date().toISOString() }
-          : u
-      )
-    );
+    setLoading(true);
 
     try {
       const res = await fetch(`/api/users/${id}`, {
@@ -84,206 +64,108 @@ export default function UsersPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          active: newStatus,
-        }),
+        body: JSON.stringify(form),
       });
 
-      const data = await res.json();
+      if (!res.ok) throw new Error();
 
-      if (!res.ok) {
-        console.error("API ERROR:", data);
-        throw new Error("Update failed");
-      }
-
-      console.log("UPDATED IN DB:", data);
-
+      /*router.push("/users");*/
+      router.push(`/users/edit/${id}`)
     } catch (err) {
-      console.error("TOGGLE ERROR:", err);
-
-      // rollback si erreur
-      setUsers(previous);
+      alert("Erreur update user");
+    } finally {
+      setLoading(false);
     }
   }
 
-  // ❌ DELETE USER
-  async function deleteUser(id: string) {
-    const confirmDelete = confirm("Supprimer cet utilisateur ?");
-    if (!confirmDelete) return;
-
-    const previous = users;
-
-    setUsers((prev) => prev.filter((u) => u.id !== id));
-
-    try {
-      const res = await fetch(`/api/users/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!res.ok) throw new Error("Delete failed");
-
-    } catch (err) {
-      console.error("DELETE ERROR:", err);
-
-      setUsers(previous); // rollback
-    }
+  // LOADING STATE
+  if (fetching) {
+    return (
+      <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
+        <p className="animate-pulse">Chargement utilisateur...</p>
+      </div>
+    );
   }
 
   return (
     <div className="min-h-screen bg-slate-950 text-white p-6">
 
       {/* HEADER */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-3xl font-bold">Modifier utilisateur</h1>
 
-        <div>
-          <h1 className="text-3xl font-bold">Utilisateurs</h1>
-          <p className="text-slate-400 text-sm">Gestion des comptes</p>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => router.push("/users/new")}
-            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl border border-slate-700"
-          >
-            <Plus size={16} />
-            Ajouter
-          </button>
-
-          <button
-            onClick={() => router.push("/dashboard")}
-            className="flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-xl border border-slate-800"
-          >
-            <ArrowLeft size={16} />
-            Dashboard
-          </button>
-        </div>
+        <button
+          onClick={() => router.push("/users")}
+          className="flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-xl border border-slate-800"
+        >
+          <ArrowLeft size={16} />
+          Retour
+        </button>
       </div>
 
-      {/* FILTERS */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 flex gap-2 mb-4">
+      {/* FORM */}
+      <form
+        onSubmit={updateUser}
+        className="max-w-xl bg-slate-900 p-6 rounded-2xl border border-slate-800 space-y-4"
+      >
+        {/* CODE */}
+        <input
+          className="w-full bg-slate-800 p-3 rounded-xl"
+          placeholder="Code utilisateur"
+          value={form.code}
+          onChange={(e) =>
+            setForm({ ...form, code: e.target.value })
+          }
+        />
 
+        {/* EMAIL */}
+        <input
+          className="w-full bg-slate-800 p-3 rounded-xl"
+          placeholder="Email"
+          value={form.email}
+          onChange={(e) =>
+            setForm({ ...form, email: e.target.value })
+          }
+        />
+
+        {/* ROLE */}
         <select
-          className="bg-slate-800 px-3 py-2 rounded-lg text-sm"
-          value={roleFilter}
-          onChange={(e) => setRoleFilter(e.target.value)}
+          className="w-full bg-slate-800 p-3 rounded-xl"
+          value={form.role}
+          onChange={(e) =>
+            setForm({ ...form, role: e.target.value })
+          }
         >
-          <option value="ALL">Tous rôles</option>
           <option value="ADMIN">Admin</option>
-          <option value="USER">User</option>
+          <option value="MANAGER">Manager</option>
           <option value="TECH">Tech</option>
         </select>
 
+        {/* ACTIVE */}
         <select
-          className="bg-slate-800 px-3 py-2 rounded-lg text-sm"
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          className="w-full bg-slate-800 p-3 rounded-xl"
+          value={form.active ? "true" : "false"}
+          onChange={(e) =>
+            setForm({
+              ...form,
+              active: e.target.value === "true",
+            })
+          }
         >
-          <option value="ALL">Tous statuts</option>
-          <option value="ACTIVE">Actif</option>
-          <option value="DISABLED">Désactivé</option>
+          <option value="true">Actif</option>
+          <option value="false">Inactif</option>
         </select>
 
-      </div>
-
-      {/* TABLE */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl p-3 overflow-x-auto">
-
-        {loading ? (
-          <div className="text-center py-6 text-slate-400">
-            Chargement...
-          </div>
-        ) : (
-          <table className="w-full text-xs">
-
-            <thead>
-              <tr className="text-slate-400 border-b border-slate-800">
-                <th className="text-left py-2 px-2">Code</th>
-                <th className="text-center py-2 px-2">Rôle</th>
-                <th className="text-center py-2 px-2">Statut</th>
-                <th className="text-center py-2 px-2">Créé</th>
-                <th className="text-center py-2 px-2">Modifié</th>
-                <th className="text-center py-2 px-2">Actions</th>
-              </tr>
-            </thead>
-
-            <tbody>
-              {filteredUsers.map((u: any) => (
-                <tr key={u.id} className="border-b border-slate-800 hover:bg-slate-800/40">
-
-                  {/* CODE */}
-                  <td className="py-2 px-2 flex items-center gap-1">
-                    <Hash size={12} />
-                    {u.code || "--"}
-                  </td>
-
-                  {/* ROLE */}
-                  <td className="py-2 px-2 text-center">{u.role}</td>
-
-                  {/* STATUS */}
-                  <td className="py-2 px-2 text-center">
-                    {u.active ? (
-                      <span className="text-green-400">Actif</span>
-                    ) : (
-                      <span className="text-red-400">Désactivé</span>
-                    )}
-                  </td>
-
-                  {/* CREATED */}
-                  <td className="py-2 px-2 text-center text-slate-300">
-                    {formatDate(u.createdAt)}
-                  </td>
-
-                  {/* UPDATED */}
-                  <td className="py-2 px-2 text-center text-slate-300">
-                    {formatDate(u.updatedAt)}
-                  </td>
-
-                  {/* ACTIONS */}
-                  <td className="py-2 px-2">
-                    <div className="flex items-center justify-center gap-2">
-
-                      {/* ACTIVER / DÉSACTIVER */}
-                      <button
-                        onClick={() => toggleUserStatus(u.id)}
-                        className={`px-2 py-1 rounded text-[11px] border transition-all
-                          ${
-                            u.active
-                              ? "text-red-400 border-red-500 hover:bg-red-500/10"
-                              : "text-green-400 border-green-500 hover:bg-green-500/10"
-                          }
-                        `}
-                      >
-                        {u.active ? "Désactiver" : "Activer"}
-                      </button>
-
-                      {/* MODIFIER */}
-                      <button
-                        onClick={() => router.push(`/users/edit/${u.id}`)}
-                        className="text-blue-400 hover:text-blue-300"
-                      >
-                        <Pencil size={14} />
-                      </button>
-
-                      {/* DELETE */}
-                      <button
-                        onClick={() => deleteUser(u.id)}
-                        className="text-red-400 hover:text-red-300"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-
-                    </div>
-                  </td>
-
-                </tr>
-              ))}
-            </tbody>
-
-          </table>
-        )}
-
-      </div>
-
+        {/* SUBMIT */}
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-blue-600 p-3 rounded-xl flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          <Save size={16} />
+          {loading ? "Sauvegarde..." : "Enregistrer"}
+        </button>
+      </form>
     </div>
   );
 }
