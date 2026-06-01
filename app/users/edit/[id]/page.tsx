@@ -4,16 +4,22 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ArrowLeft, Save } from "lucide-react";
 
+type UserForm = {
+  code: string;
+  email: string;
+  password: string;
+  role: "ADMIN" | "MANAGER" | "TECH";
+};
+
 export default function EditUserPage() {
   const router = useRouter();
   const params = useParams();
-
   const id = params?.id as string;
 
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<UserForm>({
     code: "",
     email: "",
     password: "",
@@ -21,7 +27,7 @@ export default function EditUserPage() {
   });
 
   // =========================
-  // LOAD USER DATA
+  // LOAD USER
   // =========================
   useEffect(() => {
     if (!id) return;
@@ -33,19 +39,16 @@ export default function EditUserPage() {
         const res = await fetch(`/api/users/${id}`);
         const data = await res.json();
 
-        if (!res.ok) {
-          throw new Error(data?.error || "User not found");
-        }
+        if (!res.ok) throw new Error(data?.error || "User not found");
 
         setForm({
-          code: data.code ?? "",
-          email: data.email ?? "",
-          password: "", // ⚠️ password jamais retourné (sécurité)
-          role: data.role ?? "TECH",
+          code: data.code,
+          email: data.email,
+          password: "",
+          role: data.role,
         });
 
       } catch (err) {
-        console.error(err);
         alert("Utilisateur introuvable");
         router.push("/users");
       } finally {
@@ -54,23 +57,48 @@ export default function EditUserPage() {
     };
 
     fetchUser();
-  }, [id, router]);
+  }, [id]);
 
   // =========================
   // UPDATE USER
   // =========================
-  const updateUser = async (e: any) => {
+  const updateUser = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
       setLoading(true);
+
+      const code = form.code.trim();
+      const email = form.email.trim();
+
+      // 🔐 FRONT VALIDATION
+      if (code.length < 3) {
+        alert("Code trop court");
+        return;
+      }
+
+      if (!email.includes("@")) {
+        alert("Email invalide");
+        return;
+      }
+
+      const payload: any = {
+        code,
+        email,
+        role: form.role,
+      };
+
+      // password only if filled
+      if (form.password.trim().length >= 6) {
+        payload.password = form.password.trim();
+      }
 
       const res = await fetch(`/api/users/${id}`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
@@ -81,143 +109,98 @@ export default function EditUserPage() {
 
       router.push("/users");
 
-    } catch (err) {
-      console.error(err);
-      alert("Erreur modification utilisateur");
+    } catch (err: any) {
+      alert(err.message || "Erreur modification utilisateur");
     } finally {
       setLoading(false);
     }
   };
 
   // =========================
-  // LOADING UI
+  // LOADING
   // =========================
   if (fetching) {
     return (
       <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">
-        <p className="animate-pulse">Chargement utilisateur...</p>
+        <p className="animate-pulse">Chargement...</p>
       </div>
     );
   }
 
-  // =========================
-  // UI
-  // =========================
   return (
     <div className="min-h-screen bg-slate-950 text-white p-6">
 
-      {/* HEADER */}
-      <div className="flex items-center justify-between mb-6">
-
-        <div>
-          <h1 className="text-3xl font-bold">
-            Modifier utilisateur
-          </h1>
-
-          <p className="text-slate-400 text-sm">
-            Mise à jour du compte
-          </p>
-        </div>
+      <div className="flex justify-between mb-6">
+        <h1 className="text-3xl font-bold">Modifier utilisateur</h1>
 
         <button
           onClick={() => router.push("/users")}
-          className="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl"
+          className="flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-xl"
         >
           <ArrowLeft size={16} />
           Retour
         </button>
-
       </div>
 
-      {/* FORM */}
       <form
         onSubmit={updateUser}
-        className="max-w-xl bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-5"
+        className="max-w-xl bg-slate-900 p-6 rounded-2xl space-y-5"
       >
 
         {/* CODE */}
-        <div>
-          <label className="text-sm text-slate-300 mb-1 block">
-            Code utilisateur
-          </label>
-
-          <input
-            type="text"
-            required
-            value={form.code}
-            onChange={(e) =>
-              setForm({ ...form, code: e.target.value })
-            }
-            className="w-full bg-slate-800 rounded-xl px-4 py-3"
-          />
-        </div>
+        <input
+          value={form.code}
+          onChange={(e) =>
+            setForm({ ...form, code: e.target.value })
+          }
+          className="w-full bg-slate-800 p-3 rounded-xl"
+          placeholder="Code utilisateur"
+        />
 
         {/* EMAIL */}
-        <div>
-          <label className="text-sm text-slate-300 mb-1 block">
-            Email
-          </label>
+        <input
+          value={form.email}
+          onChange={(e) =>
+            setForm({ ...form, email: e.target.value })
+          }
+          className="w-full bg-slate-800 p-3 rounded-xl"
+          placeholder="Email"
+        />
 
-          <input
-            type="email"
-            required
-            value={form.email}
-            onChange={(e) =>
-              setForm({ ...form, email: e.target.value })
-            }
-            className="w-full bg-slate-800 rounded-xl px-4 py-3"
-          />
-        </div>
-
-        {/* PASSWORD (OPTIONNEL) */}
-        <div>
-          <label className="text-sm text-slate-300 mb-1 block">
-            Nouveau mot de passe (optionnel)
-          </label>
-
-          <input
-            type="password"
-            value={form.password}
-            onChange={(e) =>
-              setForm({ ...form, password: e.target.value })
-            }
-            className="w-full bg-slate-800 rounded-xl px-4 py-3"
-            placeholder="laisser vide si inchangé"
-          />
-        </div>
+        {/* PASSWORD */}
+        <input
+          type="password"
+          value={form.password}
+          onChange={(e) =>
+            setForm({ ...form, password: e.target.value })
+          }
+          className="w-full bg-slate-800 p-3 rounded-xl"
+          placeholder="Nouveau mot de passe (optionnel)"
+        />
 
         {/* ROLE */}
-        <div>
-          <label className="text-sm text-slate-300 mb-1 block">
-            Rôle
-          </label>
-
-          <select
-            value={form.role}
-            onChange={(e) =>
-              setForm({ ...form, role: e.target.value })
-            }
-            className="w-full bg-slate-800 rounded-xl px-4 py-3"
-          >
-            <option value="ADMIN">Admin</option>
-            <option value="MANAGER">Manager</option>
-            <option value="TECH">Technicien</option>
-          </select>
-        </div>
+        <select
+          value={form.role}
+          onChange={(e) =>
+            setForm({ ...form, role: e.target.value as any })
+          }
+          className="w-full bg-slate-800 p-3 rounded-xl"
+        >
+          <option value="ADMIN">Admin</option>
+          <option value="MANAGER">Manager</option>
+          <option value="TECH">Technicien</option>
+        </select>
 
         {/* BUTTON */}
         <button
-          type="submit"
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 rounded-xl py-3"
+          className="w-full bg-blue-600 py-3 rounded-xl flex justify-center items-center gap-2"
         >
           <Save size={18} />
-
           {loading ? "Sauvegarde..." : "Enregistrer"}
         </button>
 
       </form>
-
     </div>
   );
 }

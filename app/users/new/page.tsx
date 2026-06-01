@@ -6,18 +6,24 @@ import { ArrowLeft, Save } from "lucide-react";
 
 export default function NewUserPage() {
   const router = useRouter();
-
   const [loading, setLoading] = useState(false);
 
   const [form, setForm] = useState({
     code: "",
     email: "",
     password: "",
+    confirmPassword: "",
     role: "TECH",
   });
 
-  async function createUser(e: any) {
+  async function createUser(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    // 🔥 VALIDATION PASSWORD MATCH
+    if (form.password !== form.confirmPassword) {
+      alert("Les mots de passe ne sont pas identiques");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -27,18 +33,24 @@ export default function NewUserPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          code: form.code.trim(),
+          email: form.email.trim(),
+          password: form.password,
+          role: form.role,
+        }),
       });
 
+      const data = await res.json();
+
       if (!res.ok) {
-        throw new Error("Erreur création");
+        throw new Error(data?.error || "Erreur création");
       }
 
       router.push("/users");
-
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Erreur lors de la création");
+      alert(err.message || "Erreur lors de la création");
     } finally {
       setLoading(false);
     }
@@ -130,6 +142,32 @@ export default function NewUserPage() {
           />
         </div>
 
+        {/* CONFIRM PASSWORD */}
+        <div>
+          <label className="text-sm text-slate-300 mb-1 block">
+            Confirmer mot de passe
+          </label>
+
+          <input
+            type="password"
+            required
+            value={form.confirmPassword}
+            onChange={(e) =>
+              setForm({ ...form, confirmPassword: e.target.value })
+            }
+            className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 outline-none focus:border-blue-500"
+            placeholder="********"
+          />
+
+          {/* warning UI */}
+          {form.confirmPassword &&
+            form.password !== form.confirmPassword && (
+              <p className="text-red-500 text-sm mt-1">
+                Les mots de passe ne correspondent pas
+              </p>
+            )}
+        </div>
+
         {/* ROLE */}
         <div>
           <label className="text-sm text-slate-300 mb-1 block">
@@ -153,16 +191,13 @@ export default function NewUserPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 transition rounded-xl py-3 font-medium"
+          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 transition rounded-xl py-3 font-medium disabled:opacity-50"
         >
           <Save size={18} />
-
           {loading ? "Création..." : "Créer utilisateur"}
         </button>
 
       </form>
-
     </div>
   );
 }
-

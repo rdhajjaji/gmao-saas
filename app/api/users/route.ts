@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
+
 
 import prisma from "@/lib/prisma";
 // 📥 GET USERS
@@ -73,7 +73,7 @@ export async function POST(req: Request) {
       data: {
         email: body.email,
         code: body.code,
-        password: await bcrypt.hash(body.password, 10),
+        password: body.password,
         role: body.role || "TECH",
         active: true,
       },

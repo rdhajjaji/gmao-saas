@@ -8,18 +8,18 @@ export async function POST(req: Request) {
     const code = body.code?.trim();
     const password = body.password?.trim();
 
-    console.log("LOGIN TRY:", code);
+   // console.log("LOGIN TRY:", code);
 
     const allUsers = await prisma.user.findMany();
 
-    console.log("ALL USERS:", allUsers);
+    //console.log("ALL USERS:", allUsers);
 
     // Comparaison propre sans tabulations
     const user = allUsers.find(
       (u: { code: string }) => u.code.trim() === code
     );
 
-    console.log("USER FOUND:", user);
+    // console.log("USER FOUND:", user);
 
     if (!user) {
       return NextResponse.json(
