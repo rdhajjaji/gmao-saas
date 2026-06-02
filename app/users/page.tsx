@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Trash2, Hash, Plus, Pencil } from "lucide-react";
+import { ArrowLeft, Trash2, Hash, Plus, Pencil, Settings } from "lucide-react";
 
 export default function UsersPage() {
   const router = useRouter();
@@ -112,6 +112,12 @@ export default function UsersPage() {
       console.error(err);
       setUsers(previous); // rollback
     }
+  }
+
+  // ⚙️ CONFIGURATION USER
+  async function openUserConfig(id: string) {
+    // Route vers la page de configuration
+    router.push(`/users/config/${id}`);
   }
 
   return (
@@ -237,6 +243,7 @@ export default function UsersPage() {
                               : "text-green-400 border-green-500 hover:bg-green-500/10"
                           }
                         `}
+                        title={u.active ? "Désactiver l'utilisateur" : "Activer l'utilisateur"}
                       >
                         {u.active ? "Désactiver" : "Activer"}
                       </button>
@@ -244,15 +251,26 @@ export default function UsersPage() {
                       {/* 2. MODIFIER */}
                       <button
                         onClick={() => router.push(`/users/edit/${u.id}`)}
-                        className="text-blue-400 hover:text-blue-300"
+                        className="text-blue-400 hover:text-blue-300 p-1 hover:bg-blue-500/10 rounded transition-colors"
+                        title="Modifier l'utilisateur"
                       >
                         <Pencil size={14} />
                       </button>
 
-                      {/* 3. SUPPRIMER */}
+                      {/* 3. CONFIGURATION */}
+                      <button
+                        onClick={() => openUserConfig(u.id)}
+                        className="text-purple-400 hover:text-purple-300 p-1 hover:bg-purple-500/10 rounded transition-colors"
+                        title="Configurer l'utilisateur"
+                      >
+                        <Settings size={14} />
+                      </button>
+
+                      {/* 4. SUPPRIMER */}
                       <button
                         onClick={() => deleteUser(u.id)}
-                        className="text-red-400 hover:text-red-300"
+                        className="text-red-400 hover:text-red-300 p-1 hover:bg-red-500/10 rounded transition-colors"
+                        title="Supprimer l'utilisateur"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -265,6 +283,19 @@ export default function UsersPage() {
             </tbody>
 
           </table>
+        )}
+
+        {/* Empty State */}
+        {!loading && filteredUsers.length === 0 && (
+          <div className="text-center py-8 text-slate-400">
+            <p>Aucun utilisateur trouvé</p>
+            <button
+              onClick={() => router.push("/users/new")}
+              className="text-blue-400 hover:text-blue-300 mt-2 text-sm"
+            >
+              Créer un utilisateur
+            </button>
+          </div>
         )}
 
       </div>

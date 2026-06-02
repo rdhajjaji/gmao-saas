@@ -32,7 +32,6 @@ export async function GET(
     );
   }
 }
-
 // UPDATE USER
 export async function PATCH(
   request: NextRequest,
@@ -167,5 +166,49 @@ export async function DELETE(
       { error: "Erreur suppression" },
       { status: 500 }
     );
+  }
+}
+
+// app/api/users/[id]/route.ts
+
+
+/*export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: params.id },
+      select: { id: true, code: true, email: true, role: true }, // jamais le mot de passe
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "Utilisateur introuvable" }, { status: 404 });
+    }
+
+    return NextResponse.json(user);
+
+  } catch (err) {
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}*/
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const body = await req.json(); // ← source de l'erreur si le body est vide côté client
+    const { code, email, role, password } = body;
+
+    const updateData: any = { code, email, role };
+
+    if (password && password.trim() !== "") {
+      updateData.password = await bcrypt.hash(password, 10);
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: params.id },
+      data: updateData,
+    });
+
+    return NextResponse.json(updated); // ← TOUJOURS retourner un JSON
+
+  } catch (err) {
+    return NextResponse.json({ error: "Erreur lors de la mise à jour" }, { status: 500 });
   }
 }

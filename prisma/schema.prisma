@@ -1,137 +1,39 @@
-import { NextRequest, NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// =========================
-// GET USER
-// =========================
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const id = Number(params.id);
-
-    if (isNaN(id)) {
-      return NextResponse.json(
-        { error: "Invalid ID" },
-        { status: 400 }
-      );
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "Utilisateur introuvable" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(user);
-
-  } catch (error) {
-    console.error(error);
-
-    return NextResponse.json(
-      { error: "Erreur serveur" },
-      { status: 500 }
-    );
-  }
+generator client {
+  provider = "prisma-client-js"
 }
 
-// =========================
-// UPDATE USER
-// =========================
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const id = Number(params.id);
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
 
-    if (isNaN(id)) {
-      return NextResponse.json(
-        { error: "Invalid user ID" },
-        { status: 400 }
-      );
-    }
+enum Role {
+  ADMIN
+  MANAGER
+  TECH
+}
 
-    const body = await req.json();
+model User {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  code      String    @unique
+  password  String
+  role      Role      @default(TECH)
+  active    Boolean   @default(true)
+  deletedAt DateTime?
 
-    const code = body.code?.trim();
-    const email = body.email?.trim().toLowerCase();
-    const password = body.password;
-    const role = body.role;
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
 
-    // =========================
-    // CHECK EMAIL UNIQUE
-    // =========================
-    const emailExists = await prisma.user.findFirst({
-      where: {
-        email,
-        NOT: { id },
-      },
-    });
-
-    if (emailExists) {
-      return NextResponse.json(
-        { error: "Email déjà utilisé" },
-        { status: 400 }
-      );
-    }
-
-    // =========================
-    // CHECK CODE UNIQUE
-    // =========================
-    const codeExists = await prisma.user.findFirst({
-      where: {
-        code,
-        NOT: { id },
-      },
-    });
-
-    if (codeExists) {
-      return NextResponse.json(
-        { error: "Code déjà utilisé" },
-        { status: 400 }
-      );
-    }
-
-    // =========================
-    // BUILD DATA
-    // =========================
-    const data: any = {
-      code,
-      email,
-      role,
-    };
-
-    // =========================
-    // PASSWORD SECURE
-    // =========================
-    if (password && password.trim().length >= 6) {
-      data.password = await bcrypt.hash(password.trim(), 10);
-    }
-
-    // =========================
-    // UPDATE USER
-    // =========================
-    const updated = await prisma.user.update({
-      where: { id },
-      data,
-    });
-
-    return NextResponse.json(updated);
-
-  } catch (err) {
-    console.error(err);
-
-    return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
-    );
-  }
+model LoginLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  email     String
+  success   Boolean
+  ip        String?
+  createdAt DateTime @default(now())
 }
