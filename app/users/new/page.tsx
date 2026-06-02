@@ -16,7 +16,7 @@ type UserFormState = {
   email: string;
   password: string;
   confirmPassword: string;
-  role: "ADMIN" | "MANAGER" | "TECH";
+  role: "" | "TECH" | "MANAGER" | "ADMIN";
 };
 
 type FieldErrors = Partial<Record<keyof UserFormState, string>>;

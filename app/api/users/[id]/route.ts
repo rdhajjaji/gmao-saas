@@ -94,6 +94,7 @@ export async function PATCH(
         email,
         role: body.role,
         active: body.active,
+        //updateAt: Date.now(), 
         code,
       },
     });
@@ -190,7 +191,7 @@ export async function DELETE(
   }
 }*/
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+/*export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const body = await req.json(); // ← source de l'erreur si le body est vide côté client
     const { code, email, role, password } = body;
@@ -211,4 +212,4 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   } catch (err) {
     return NextResponse.json({ error: "Erreur lors de la mise à jour" }, { status: 500 });
   }
-}
+}*/
